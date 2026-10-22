@@ -7,6 +7,14 @@ from pathlib import Path
 
 from document_processor import Document, load_markdown, load_website_documents
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    # Shell environment variables still work if python-dotenv is unavailable.
+    pass
+
 
 @dataclass(frozen=True)
 class Chunk:
