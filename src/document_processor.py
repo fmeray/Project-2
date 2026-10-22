@@ -23,7 +23,7 @@ WEBSITE_URLS = [
 class Document:
     """Clean text extracted from one source page."""
 
-    path: str
+    path: str | Path
     text: str
     source_type: str = "web"
     metadata: dict[str, str] = field(default_factory=dict)
@@ -89,6 +89,32 @@ def load_urls(urls: list[str]) -> list[Document]:
     if not urls:
         raise ValueError("Add at least one URL to WEBSITE_URLS or pass a URL list")
     return [load_url(url) for url in urls]
+
+
+def load_markdown(
+    directory: Path, source_type: str = "secondary"
+) -> list[Document]:
+    """Load Markdown files as documents for the same RAG pipeline."""
+    if not directory.exists():
+        return []
+
+    documents: list[Document] = []
+    for path in sorted(directory.rglob("*.md")):
+        text = path.read_text(encoding="utf-8").strip()
+        if text:
+            documents.append(
+                Document(
+                    path=path,
+                    text=text,
+                    source_type=source_type,
+                    metadata={
+                        "source_file": str(path),
+                        "title": path.stem,
+                        "source_type": source_type,
+                    },
+                )
+            )
+    return documents
 
 
 def load_saved_documents(output_dir: Path) -> dict[str, Document]:
