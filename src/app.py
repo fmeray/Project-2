@@ -16,57 +16,186 @@ BACKGROUND_IMAGE = Path(__file__).with_name("FREITAG.png")
 
 
 def _background_css() -> str:
-    """Embed the local FREITAG image so Gradio can serve it reliably."""
+    """Apply distinct light/dark palettes to the industrial studio layout."""
 
-    if not BACKGROUND_IMAGE.exists():
-        return ""
-    image_data = base64.b64encode(BACKGROUND_IMAGE.read_bytes()).decode("ascii")
-    return f"""
-    .gradio-container {{
+    return """
+    .gradio-container {
+        --studio-paper: #f5f2e9;
+        --studio-soft: #e6e1d5;
+        --studio-field: #ffffff;
+        --studio-ink: #101b2c;
+        --studio-muted: #4c5868;
+        --studio-line: #637080;
+        --studio-hover: #d6d0c2;
+        --studio-link: #a3380d;
+        --studio-overlay: rgba(239, 232, 215, .28);
+        --studio-shadow: #101b2c;
+        color-scheme: light;
+        --body-text-color: var(--studio-ink);
+        --body-text-color-subdued: var(--studio-muted);
+        --background-fill-primary: var(--studio-paper);
+        --background-fill-secondary: var(--studio-soft);
+        --block-background-fill: var(--studio-paper);
+        --block-border-color: var(--studio-line);
+        --block-label-background-fill: var(--studio-paper);
+        --block-label-text-color: var(--studio-ink);
+        --block-title-text-color: var(--studio-ink);
+        --input-background-fill: var(--studio-field);
+        --input-border-color: var(--studio-line);
+        --input-border-color-focus: var(--studio-ink);
+        --input-placeholder-color: var(--studio-muted);
+        --input-text-size: 16px;
+        --input-radius: 4px;
+        --border-color-primary: var(--studio-line);
+        --border-color-accent: var(--studio-ink);
+        --neutral-50: var(--studio-field);
+        --neutral-100: var(--studio-soft);
+        --neutral-200: #d9dde1;
+        --neutral-500: var(--studio-muted);
+        --neutral-700: #28364a;
+        --neutral-800: var(--studio-ink);
+        --neutral-900: var(--studio-ink);
+        --button-primary-background-fill: #ff823f;
+        --button-primary-background-fill-hover: #ff9d68;
+        --button-primary-text-color: #101722;
+        --button-primary-border-color: #101722;
+        --button-secondary-background-fill: var(--studio-soft);
+        --button-secondary-background-fill-hover: var(--studio-hover);
+        --button-secondary-text-color: var(--studio-ink);
+        --button-secondary-border-color: var(--studio-line);
+        --link-text-color: var(--studio-link);
+        --link-text-color-hover: var(--studio-link);
+        --body-text-size: 16px;
+        --font: Arial, Helvetica, sans-serif;
+        font-family: Arial, Helvetica, sans-serif;
+        max-width: 1200px !important;
+        padding: 32px 24px 48px !important;
+        gap: 20px !important;
+        position: relative;
+        isolation: isolate;
         background: transparent !important;
-        background-color: transparent !important;
-        max-width: 1400px !important;
-        position: relative !important;
-        z-index: 1 !important;
-    }}
-
-    #freitag-background {{
+        color: var(--studio-ink);
+    }
+    .dark .gradio-container, .gradio-container.dark {
+        --studio-paper: #142238;
+        --studio-soft: #1d3049;
+        --studio-field: #0b1626;
+        --studio-ink: #f5f2e9;
+        --studio-muted: #b7c4d6;
+        --studio-line: #7e91aa;
+        --studio-hover: #2e4563;
+        --studio-link: #ffad79;
+        --studio-overlay: rgba(5, 13, 25, .52);
+        --studio-shadow: #000000;
+        color-scheme: dark;
+    }
+    .gradio-container > * {
+        position: relative;
+        z-index: 1;
+    }
+    #studio-background {
         position: fixed !important;
         inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
         z-index: 0 !important;
-        pointer-events: none !important;
-        background-color: #242424 !important;
-        background-image:
-            linear-gradient(rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.48)),
-            url("data:image/png;base64,{image_data}") !important;
-        background-position: center !important;
-        background-size: cover !important;
-        background-repeat: no-repeat !important;
-    }}
-
-    .gradio-container .block,
-    .gradio-container .gr-box,
-    .gradio-container .gr-panel {{
-        background: rgba(255, 255, 255, 0.91) !important;
-        border-color: rgba(255, 255, 255, 0.7) !important;
-    }}
+        pointer-events: none;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        background: #101b2c !important;
+    }
+    #studio-background img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    #studio-background::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--studio-overlay);
+    }
+    #studio-photo-window {
+        min-height: 180px;
+        background: transparent !important;
+        border: 0 !important;
+        pointer-events: none;
+    }
+    #studio-header {
+        background: #ff823f;
+        border: 2px solid #101722;
+        border-radius: 0;
+        padding: 32px;
+        box-shadow: 8px 8px 0 var(--studio-shadow);
+        overflow: hidden;
+        margin-bottom: 48px;
+    }
+    #studio-header h1 {
+        color: #101722;
+        font-size: clamp(40px, 7vw, 88px);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -.065em;
+        line-height: .98;
+        max-width: 850px;
+        margin: 12px 0 24px;
+    }
+    #studio-header p { color: #101722; margin-bottom: 0; line-height: 1.6; max-width: 620px; }
+    #studio-header p:first-child {
+        font-family: monospace;
+        font-size: 12px;
+        letter-spacing: .14em;
+        font-weight: 700;
+    }
+    .studio-panel {
+        background: var(--studio-paper) !important;
+        border: 2px solid var(--studio-line) !important;
+        border-radius: 0 !important;
+        box-shadow: 6px 6px 0 var(--studio-shadow);
+        padding: 24px !important;
+        gap: 20px !important;
+    }
+    .studio-panel .prose, .studio-panel label, .studio-panel .block-title {
+        color: var(--studio-ink) !important;
+    }
+    .studio-panel .prose { line-height: 1.6; }
+    .studio-panel input, .studio-panel textarea {
+        color: var(--studio-ink) !important;
+        background: var(--studio-field) !important;
+        caret-color: var(--studio-ink);
+    }
+    .studio-panel input::placeholder, .studio-panel textarea::placeholder {
+        color: var(--studio-muted) !important;
+        opacity: 1;
+    }
+    .gradio-container button { min-height: 50px; font-weight: 800; border-radius: 0 !important; letter-spacing: .025em; }
+    .gradio-container :is(button, input, textarea, [tabindex]):focus-visible {
+        outline: 3px solid var(--studio-link) !important;
+        outline-offset: 3px;
+    }
+    #studio-status { border-left: 5px solid #ff823f; padding: 16px; background: var(--studio-soft); }
+    .studio-section h2 { font-size: 18px; text-transform: uppercase; letter-spacing: .06em; margin: 0; }
+    #studio-sources { overflow-wrap: anywhere; }
+    @media (max-width: 640px) {
+        .gradio-container { padding: 16px 12px 32px !important; }
+        .studio-panel, #studio-header { padding: 16px !important; }
+    }
     """
 
 
 def _background_html() -> str:
-    """Create a fixed in-app background layer using the local image."""
+    """Render the photo as an image instead of relying on a CSS pseudo-element."""
 
     if not BACKGROUND_IMAGE.exists():
         return ""
     image_data = base64.b64encode(BACKGROUND_IMAGE.read_bytes()).decode("ascii")
     return (
-        '<div id="freitag-background" '
-        'style="position:fixed;inset:0;z-index:0;pointer-events:none;'
-        'background-color:#242424;'
-        'background-image:linear-gradient(rgba(0,0,0,.48),rgba(0,0,0,.48)),'
-        f'url(data:image/png;base64,{image_data});'
-        'background-position:center;background-size:cover;background-repeat:no-repeat;">'
-        "</div>"
+        '<img src="data:image/png;base64,' + image_data + '" alt="" '
+        'aria-hidden="true" style="position:fixed;inset:0;width:100vw;'
+        'height:100vh;object-fit:cover;pointer-events:none;">'
     )
 
 
@@ -169,18 +298,23 @@ def deliver_ui(channel: str, approved_draft: str, recipient_email: str):
 def create_app() -> gr.Blocks:
     with gr.Blocks(title="FREITAG Content Studio") as demo:
         if BACKGROUND_IMAGE.exists():
-            gr.HTML(_background_html())
+            gr.HTML(_background_html(), elem_id="studio-background")
         gr.Markdown(
-            "# FREITAG Content Studio\n"
+            "STUDIO / FREITAG — HUMAN-REVIEWED CONTENT\n\n"
+            "# FREITAG Content Studio\n\n"
             "Generate grounded content, review every revision, and save only "
-            "human-approved drafts."
+            "human-approved drafts.",
+            elem_id="studio-header",
         )
+
+        gr.HTML("", elem_id="studio-photo-window", min_height=180)
 
         prompt_state = gr.State(None)
         approved_state = gr.State("")
 
         with gr.Row():
-            with gr.Column(scale=2):
+            with gr.Column(scale=2, min_width=280, elem_classes=["studio-panel"]):
+                gr.Markdown("## 01 / The brief", elem_classes=["studio-section"])
                 request = gr.Textbox(
                     label="Content request",
                     placeholder="Create a LinkedIn post about FREITAG's circular materials.",
@@ -192,32 +326,35 @@ def create_app() -> gr.Blocks:
                     label="Content channel",
                 )
                 generate_button = gr.Button("1. Generate draft", variant="primary")
-            with gr.Column(scale=3):
-                status = gr.Markdown("Ready.")
-                sources = gr.Markdown()
+            with gr.Column(scale=3, min_width=280, elem_classes=["studio-panel"]):
+                gr.Markdown("## 02 / Source desk", elem_classes=["studio-section"])
+                status = gr.Markdown("Ready.", elem_id="studio-status")
+                sources = gr.Markdown(elem_id="studio-sources")
 
-        draft = gr.Textbox(label="Draft for human review", lines=12)
-        feedback = gr.Textbox(
-            label="Reviewer feedback (mandatory for revision)",
-            placeholder="Explain what must change, or leave empty to approve.",
-            lines=4,
-        )
-        with gr.Row():
-            revise_button = gr.Button("2. Rewrite with feedback", variant="secondary")
-            approve_button = gr.Button("3. Approve & save", variant="primary")
-            deliver_button = gr.Button("4. Deliver approved content")
+        with gr.Column(elem_classes=["studio-panel"]):
+            gr.Markdown("## 03 / The edit", elem_classes=["studio-section"])
+            draft = gr.Textbox(label="Draft for human review", lines=12)
+            feedback = gr.Textbox(
+                label="Reviewer feedback (mandatory for revision)",
+                placeholder="Explain what must change, or leave empty to approve.",
+                lines=4,
+            )
+            with gr.Row():
+                revise_button = gr.Button("2. Rewrite with feedback", variant="secondary")
+                approve_button = gr.Button("3. Approve & save", variant="primary")
+                deliver_button = gr.Button("4. Deliver approved content")
 
-        saved_path = gr.Textbox(label="Approved draft path", interactive=False)
-        recipient_email = gr.Textbox(
-            label="Recipient email (optional; enter after approval)",
-            placeholder="recipient@example.com",
-            visible=False,
-        )
-        delivery_status = gr.Textbox(label="Delivery status", interactive=False)
-        gr.Markdown(
-            "Delivery is disabled unless `CONTENT_DELIVERY_ENABLED=true` is set "
-            "and the selected channel credentials are configured in `.env`."
-        )
+            saved_path = gr.Textbox(label="Approved draft path", interactive=False)
+            recipient_email = gr.Textbox(
+                label="Recipient email (optional; enter after approval)",
+                placeholder="recipient@example.com",
+                visible=False,
+            )
+            delivery_status = gr.Textbox(label="Delivery status", interactive=False)
+            gr.Markdown(
+                "Delivery is disabled unless `CONTENT_DELIVERY_ENABLED=true` is set "
+                "and the selected channel credentials are configured in `.env`."
+            )
 
         generate_button.click(
             generate_draft_ui,
