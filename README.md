@@ -28,6 +28,16 @@ feedback, then review the new draft. Nothing is saved until approval.
 
 Use `--no-llm` to test retrieval and prompt rendering without an API call.
 
+Launch the Gradio interface with:
+
+```bash
+PYTHONPATH=src python src/app.py
+```
+
+The interface separates prompt building, draft generation, reviewer feedback,
+approval, and optional delivery. A draft is not delivered until it has been
+explicitly approved.
+
 To deliver an approved draft, add the relevant platform settings to `.env` and
 run with `--deliver`. Delivery is disabled unless
 `CONTENT_DELIVERY_ENABLED=true`. Email and newsletter delivery ask for the
