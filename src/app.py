@@ -325,7 +325,7 @@ def create_app() -> gr.Blocks:
                     value="instagram",
                     label="Content channel",
                 )
-                generate_button = gr.Button("1. Generate draft", variant="primary")
+                generate_button = gr.Button("1Generate draft", variant="primary")
             with gr.Column(scale=3, min_width=280, elem_classes=["studio-panel"]):
                 gr.Markdown("## 02 / Source desk", elem_classes=["studio-section"])
                 status = gr.Markdown("Ready.", elem_id="studio-status")
@@ -340,9 +340,9 @@ def create_app() -> gr.Blocks:
                 lines=4,
             )
             with gr.Row():
-                revise_button = gr.Button("2. Rewrite with feedback", variant="secondary")
-                approve_button = gr.Button("3. Approve & save", variant="primary")
-                deliver_button = gr.Button("4. Deliver approved content")
+                revise_button = gr.Button("Rewrite with feedback", variant="secondary")
+                approve_button = gr.Button("Approve & save", variant="primary")
+                deliver_button = gr.Button("Deliver approved content")
 
             saved_path = gr.Textbox(label="Approved draft path", interactive=False)
             recipient_email = gr.Textbox(
