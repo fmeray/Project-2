@@ -1,10 +1,13 @@
 Create an Instagram caption for FREITAG.
 
 REQUEST:
-{question}
+{request}
 
-PRIMARY AND SECONDARY KNOWLEDGE:
-{context}
+PRIMARY KNOWLEDGE:
+{primary}
+
+SECONDARY KNOWLEDGE:
+{secondary}
 
 FORMAT:
 - Maximum 60 words

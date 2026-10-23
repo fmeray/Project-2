@@ -19,6 +19,80 @@ WEBSITE_URLS = [
 ]
 
 
+# These elements usually contain site chrome rather than source content.
+_BOILERPLATE_SELECTORS = [
+    "nav",
+    "header",
+    "footer",
+    "aside",
+    "form",
+    "dialog",
+    "[role='banner']",
+    "[role='navigation']",
+    "[role='complementary']",
+    "[aria-label*='cookie' i]",
+    "[aria-label*='menu' i]",
+    "[class*='cookie' i]",
+    "[id*='cookie' i]",
+    "[class*='consent' i]",
+    "[id*='consent' i]",
+    "[class*='newsletter' i]",
+    "[class*='popup' i]",
+    "[class*='modal' i]",
+    "[class*='breadcrumb' i]",
+    "[class*='social' i]",
+    "[class*='share' i]",
+    "[class*='menu' i]",
+]
+
+
+def clean_text(text: str) -> str:
+    """Normalize extracted text and remove common website boilerplate."""
+
+    lines = []
+    previous = None
+    for line in text.splitlines():
+        line = " ".join(line.split()).strip()
+        if not line or line == previous:
+            continue
+        # These are common leftovers from client-side website rendering.
+        lowered = line.lower()
+        if lowered.startswith(("javascript:", "data:text/", "webpack", "__next")):
+            continue
+        lines.append(line)
+        previous = line
+    return "\n".join(lines).strip()
+
+
+def _extract_readable_text(html: str, title: str = "") -> str:
+    """Extract the most useful readable section from an HTML page."""
+
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:
+        raise RuntimeError(
+            "Install the URL-ingestion dependencies with: "
+            "pip install -r requirements.txt"
+        ) from exc
+
+    soup = BeautifulSoup(html, "html.parser")
+    for element in soup.select(", ".join(_BOILERPLATE_SELECTORS)):
+        element.decompose()
+    for element in soup(["script", "style", "noscript", "template", "svg", "canvas"]):
+        element.decompose()
+
+    candidates = soup.find_all(["article", "main"])
+    if not candidates:
+        candidates = soup.find_all("body") or [soup]
+    readable = max(
+        (clean_text(element.get_text("\n", strip=True)) for element in candidates),
+        key=len,
+    )
+    if title and not readable.startswith(title):
+        readable = f"{title}\n\n{readable}"
+    return clean_text(readable)
+
+
 @dataclass(frozen=True)
 class Document:
     """Clean text extracted from one source page."""
@@ -56,26 +130,14 @@ def load_url(url: str, timeout: int = 20) -> Document:
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
-    for element in soup(["script", "style", "noscript", "template", "svg"]):
-        element.decompose()
-
-    # Some sites put only a short introduction in <main> while the complete
-    # page is in <body>. Choose the largest readable container instead of
-    # assuming that the first <main> or <article> contains everything.
-    candidates = [element for element in soup.find_all(["article", "main", "body"])]
-    if not candidates:
-        candidates = [soup]
-    text = max(
-        (" ".join(element.get_text(" ", strip=True).split()) for element in candidates),
-        key=len,
-    )
+    title = soup.title.get_text(" ", strip=True) if soup.title else url
+    text = _extract_readable_text(response.text, title=title)
     if not text:
         raise ValueError(f"No readable text found at {url}")
 
-    title = soup.title.get_text(" ", strip=True) if soup.title else url
     return Document(
         path=url,
-        text=f"{title}\n\n{text}",
+        text=text,
         metadata={
             "source_url": url,
             "title": title,
@@ -129,7 +191,7 @@ def load_saved_documents(output_dir: Path) -> dict[str, Document]:
             continue
 
         url = lines[0].removeprefix("Source URL: ").strip()
-        text = "\n".join(lines[2:]).strip()
+        text = clean_text("\n".join(lines[2:]))
         title = text.splitlines()[0] if text else path.stem
         cached[url] = Document(
             path=url,
@@ -146,11 +208,16 @@ def load_saved_documents(output_dir: Path) -> dict[str, Document]:
 
 def load_website_documents(
     output_dir: Path = Path("knowledge_base/primary"),
+    refresh: bool = False,
 ) -> list[Document]:
-    """Load cached pages and fetch only URLs not already saved locally."""
-    cached = load_saved_documents(output_dir)
+    """Load cached pages, optionally refreshing them from their URLs.
+
+    Set ``refresh=True`` after changing the HTML cleaner so existing cache
+    files are regenerated from the original pages rather than cleaned after
+    their HTML structure has already been lost.
+    """
+    cached = {} if refresh else load_saved_documents(output_dir)
     documents: list[Document] = []
-    new_documents: list[Document] = []
 
     for url in WEBSITE_URLS:
         if url in cached:
@@ -158,10 +225,11 @@ def load_website_documents(
         else:
             document = load_url(url)
             documents.append(document)
-            new_documents.append(document)
 
-    if new_documents:
-        save_documents(new_documents, output_dir)
+    # Rewrite cached files as well as newly fetched files. This migrates older
+    # cache entries through the cleaner without requiring a network request.
+    if documents:
+        save_documents(documents, output_dir)
 
     return documents
 

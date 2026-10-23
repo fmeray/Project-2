@@ -5,7 +5,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.document_processor import Document, load_markdown, load_website_documents
+from document_processor import Document, load_markdown, load_website_documents
 
 try:
     from dotenv import load_dotenv
@@ -35,9 +35,12 @@ class EmbeddedChunk:
 def load_knowledge_base(
     website_cache_dir="knowledge_base/primary",
     secondary_dir="knowledge_base/secondary",
+    refresh=False,
 ) -> list[Document]:
     """Load website documents and secondary Markdown documents together."""
-    website_documents = load_website_documents(Path(website_cache_dir))
+    website_documents = load_website_documents(
+        Path(website_cache_dir), refresh=refresh
+    )
     markdown_documents = load_markdown(
         Path(secondary_dir), source_type="secondary"
     )

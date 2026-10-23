@@ -1,7 +1,7 @@
 
 from pathlib import Path
 
-from src.knowledge_base import (
+from knowledge_base import (
     search_knowledge_base,
     build_context,
 )
@@ -19,10 +19,17 @@ CONTENT_TYPES = [
 ]
 
 
+def _normalise_content_type(content_type):
+    """Return the template key used on disk for a user-selected channel."""
+
+    return str(content_type).strip().lower().replace("-", "_").replace(" ", "_")
+
+
 def load_template(name):
     """Load a Markdown prompt template."""
 
-    if name not in CONTENT_TYPES and name != "system":
+    name = _normalise_content_type(name)
+    if name not in CONTENT_TYPES and name not in {"system", "revision"}:
         raise ValueError(f"Unknown template: {name}")
 
     path = TEMPLATE_DIR / f"{name}.md"
@@ -35,29 +42,63 @@ def load_template(name):
 
 def build_prompt(
     content_type,
-    question,
+    request=None,
     limit=4,
+    *,
+    question=None,
 ):
-    """Build a prompt using relevant FREITAG documents."""
+    """Build system and user prompts from the selected content template.
+
+    ``question`` is retained as a backwards-compatible alias for ``request``.
+    Retrieved documents are separated into primary and secondary context so
+    templates can apply the appropriate level of authority to each source.
+    """
+
+    if request is None:
+        request = question
+    elif question is not None and question != request:
+        raise ValueError("Pass either request or question, not both")
+    if request is None or not str(request).strip():
+        raise ValueError("request must be a non-empty string")
+
+    template_key = _normalise_content_type(content_type)
 
     system_rules = load_template("system")
-    template = load_template(content_type)
+    template = load_template(template_key)
 
     documents = search_knowledge_base(
-        query=question,
+        query=request,
         limit=limit,
     )
 
-    context = build_context(documents)
+    primary_documents = [
+        document
+        for document in documents
+        if document.source_type != "secondary"
+        and document.metadata.get("source_type") != "secondary"
+    ]
+    secondary_documents = [
+        document
+        for document in documents
+        if document.source_type == "secondary"
+        or document.metadata.get("source_type") == "secondary"
+    ]
 
-    user_prompt = template.format(
-        question=question,
-        channel=content_type,
-        context=context,
-    )
+    values = {
+        "request": request,
+        "primary": build_context(primary_documents),
+        "secondary": build_context(secondary_documents),
+        # These aliases keep older custom templates working during migration.
+        "question": request,
+        "channel": template_key,
+        "context": build_context(documents),
+    }
+
+    system_prompt = system_rules.format(**values)
+    user_prompt = template.format(**values)
 
     return {
-        "system": system_rules,
+        "system": system_prompt,
         "user": user_prompt,
         "documents": documents,
     }
