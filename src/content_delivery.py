@@ -10,6 +10,7 @@ from email.message import EmailMessage
 import os
 import re
 import smtplib
+import ssl
 from pathlib import Path
 
 
@@ -211,13 +212,38 @@ def send_email(
     message["To"] = recipient
     message["Subject"] = subject.strip() or "FREITAG content"
     message.set_content(content.strip())
+    security = os.getenv("SMTP_SECURITY", "starttls").strip().lower()
     try:
-        with smtplib.SMTP(settings["SMTP_HOST"], port, timeout=30) as smtp:
-            smtp.starttls()
+        if security == "ssl":
+            smtp_client = smtplib.SMTP_SSL(
+                settings["SMTP_HOST"],
+                port,
+                timeout=30,
+                context=ssl.create_default_context(),
+            )
+        elif security in {"starttls", "tls"}:
+            smtp_client = smtplib.SMTP(settings["SMTP_HOST"], port, timeout=30)
+        else:
+            raise DeliveryError(
+                "SMTP_SECURITY must be 'starttls' (usually port 587) or "
+                "'ssl' (usually port 465)."
+            )
+
+        with smtp_client as smtp:
+            if security in {"starttls", "tls"}:
+                smtp.starttls(context=ssl.create_default_context())
             smtp.login(settings["SMTP_USERNAME"], settings["SMTP_PASSWORD"])
             smtp.send_message(message)
     except Exception as exc:
-        raise DeliveryError("Email delivery failed. Check SMTP settings.") from exc
+        if isinstance(exc, DeliveryError):
+            raise
+        detail = str(exc).strip() or exc.__class__.__name__
+        raise DeliveryError(
+            "Email delivery failed: "
+            f"{exc.__class__.__name__}: {detail}. "
+            "Check SMTP host/port, security mode, username, password, "
+            "and provider app-password settings."
+        ) from exc
 
     return DeliveryResult(
         channel="email",
