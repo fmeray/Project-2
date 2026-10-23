@@ -1,10 +1,13 @@
 Create a newsletter for FREITAG.
 
 REQUEST:
-{question}
+{request}
 
-KNOWLEDGE:
-{context}
+PRIMARY KNOWLEDGE:
+{primary}
+
+SECONDARY KNOWLEDGE:
+{secondary}
 
 FORMAT:
 - Maximum 400 words

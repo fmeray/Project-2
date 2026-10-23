@@ -1,10 +1,13 @@
 Write an email for FREITAG.
 
 REQUEST:
-{question}
+{request}
 
-KNOWLEDGE:
-{context}
+PRIMARY KNOWLEDGE:
+{primary}
+
+SECONDARY KNOWLEDGE:
+{secondary}
 
 FORMAT:
 - Maximum 250 words
