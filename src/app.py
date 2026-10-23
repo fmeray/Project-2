@@ -2,6 +2,7 @@
 
 import base64
 from pathlib import Path
+import os
 
 import gradio as gr
 
@@ -396,4 +397,8 @@ def create_app() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    create_app().launch(css=_background_css())
+    create_app().launch(
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", 10000)),
+        css=_background_css(),
+    )
